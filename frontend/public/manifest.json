@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "LEVELORA RPG",
+  "short_name": "LEVELORA",
+  "description": "Your Life. Your Levels. Your Journey. Cozy RPG Quest & Habit System",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#253d26",
+  "theme_color": "#29452B",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
