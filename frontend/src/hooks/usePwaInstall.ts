@@ -15,7 +15,25 @@ declare global {
   }
 }
 
-export type DirectInstallResult = 'accepted' | 'dismissed' | 'already-installed' | 'unsupported';
+export type DirectInstallResult = 'accepted' | 'dismissed' | 'already-installed' | 'shortcut-created';
+
+/**
+ * Creates and downloads a 1-click desktop internet shortcut file for Windows/Desktop
+ */
+export function createDesktopShortcutFile() {
+  if (typeof window === 'undefined') return;
+  const currentUrl = window.location.origin || 'https://levelora-rpg.web.app';
+  const shortcutContent = `[InternetShortcut]\r\nURL=${currentUrl}\r\nIconIndex=0\r\nIconFile=${currentUrl}/favicon.svg\r\n`;
+  const blob = new Blob([shortcutContent], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'LEVELORA RPG.url';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
 
 export function usePwaInstall() {
   const [isInstallable, setIsInstallable] = useState(false);
@@ -66,22 +84,27 @@ export function usePwaInstall() {
       return 'already-installed';
     }
 
-    // 2. Direct browser install prompt
+    // 2. Direct browser native install prompt (creates native shortcut / app)
     if (deferredPromptRef.current) {
-      const promptEvent = deferredPromptRef.current;
-      await promptEvent.prompt();
-      const choice = await promptEvent.userChoice;
-      deferredPromptRef.current = null;
-      if (choice.outcome === 'accepted') {
-        setIsInstalled(true);
-        setIsInstallable(false);
-        return 'accepted';
+      try {
+        const promptEvent = deferredPromptRef.current;
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        deferredPromptRef.current = null;
+        if (choice.outcome === 'accepted') {
+          setIsInstalled(true);
+          setIsInstallable(false);
+          return 'accepted';
+        }
+        return 'dismissed';
+      } catch (err) {
+        console.warn('Native prompt fallback to shortcut creation:', err);
       }
-      return 'dismissed';
     }
 
-    // 3. Fallback when browser has not fired beforeinstallprompt or doesn't support programmatic install
-    return 'unsupported';
+    // 3. Direct 1-click Desktop shortcut file creation with NO tips
+    createDesktopShortcutFile();
+    return 'shortcut-created';
   }, [isInstalled]);
 
   return {

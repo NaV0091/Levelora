@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, Flame, Maximize2, Minimize2, Menu, Sparkles, LogOut, Download } from 'lucide-react';
+import { Volume2, VolumeX, Flame, Menu, Sparkles, LogOut, Download } from 'lucide-react';
 import { useLevelora } from '../../context/LeveloraContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePwaInstall } from '../../hooks/usePwaInstall';
@@ -18,30 +18,24 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
     updateSettings({ soundEnabled: !state.settings.soundEnabled });
   };
 
-  const toggleDisplayMode = () => {
-    updateSettings({
-      displayMode: state.settings.displayMode === 'frame' ? 'fullscreen' : 'frame',
-    });
-  };
-
   const handleDirectInstall = async () => {
     const result = await triggerDirectInstall();
     if (result === 'accepted') {
       addToast({
-        title: 'App Installed!',
-        message: '🎉 LEVELORA RPG was installed! Launch it anytime from your desktop or home screen.',
+        title: 'Shortcut Created!',
+        message: '🎉 LEVELORA RPG app shortcut installed directly on your device!',
+        type: 'success',
+      });
+    } else if (result === 'shortcut-created') {
+      addToast({
+        title: 'Shortcut Created!',
+        message: '✨ Desktop shortcut created and saved to your device for 1-click launch!',
         type: 'success',
       });
     } else if (result === 'already-installed') {
       addToast({
         title: 'Already Installed',
         message: '✨ LEVELORA RPG is already installed on your device.',
-        type: 'info',
-      });
-    } else if (result === 'unsupported') {
-      addToast({
-        title: 'Install App',
-        message: '⬇️ Click the Install icon in your browser address bar (or Share → Add to Home Screen) to install.',
         type: 'info',
       });
     }
@@ -117,15 +111,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu }) => {
           title={state.settings.soundEnabled ? 'Mute cozy sounds' : 'Enable cozy sounds'}
         >
           {state.settings.soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} className="text-red-300" />}
-        </button>
-
-        {/* Frame / Fullscreen view toggle */}
-        <button
-          onClick={toggleDisplayMode}
-          className="hidden md:flex p-2 rounded-xl bg-white/10 hover:bg-white/20 text-[#FFF5E8] transition-all active:scale-95 cursor-pointer"
-          title={state.settings.displayMode === 'frame' ? 'Switch to Fullscreen Canvas' : 'Switch to Studio Frame'}
-        >
-          {state.settings.displayMode === 'frame' ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
         </button>
 
         {/* Direct 1-Click Install App Button */}

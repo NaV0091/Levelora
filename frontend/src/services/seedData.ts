@@ -24,7 +24,7 @@ export function getInitialSeedData(username: string = 'Adventurer', userId: stri
       soundEnabled: true,
       animationsEnabled: true,
       dailyGoalQuests: 5,
-      displayMode: 'frame',
+      displayMode: 'fullscreen',
       firstDayOfWeek: 'monday',
     },
     quests: [

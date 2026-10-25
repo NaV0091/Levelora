@@ -20,8 +20,6 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   updateAdventurerName: (newName: string) => Promise<void>;
-  isConfigModalOpen: boolean;
-  setIsConfigModalOpen: (open: boolean) => void;
   needsNamePrompt: boolean;
   setNeedsNamePrompt: (needed: boolean) => void;
 }
@@ -32,7 +30,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLiveFirebase, setIsLiveFirebase] = useState(false);
-  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [needsNamePrompt, setNeedsNamePrompt] = useState(false);
 
   useEffect(() => {
@@ -124,8 +121,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithGoogle,
         signOut,
         updateAdventurerName,
-        isConfigModalOpen,
-        setIsConfigModalOpen,
         needsNamePrompt,
         setNeedsNamePrompt,
       }}

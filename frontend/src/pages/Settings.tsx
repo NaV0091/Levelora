@@ -10,9 +10,7 @@ import {
   ShieldCheck, 
   AlertTriangle,
   User,
-  Monitor,
-  LogOut,
-  Database
+  LogOut
 } from 'lucide-react';
 import { useLevelora } from '../context/LeveloraContext';
 import { useAuth } from '../context/AuthContext';
@@ -20,7 +18,7 @@ import { StorageService } from '../services/storage';
 
 export const Settings: React.FC = () => {
   const { state, updateProfile, updateSettings, resetAllProgress } = useLevelora();
-  const { user, signOut, isLiveFirebase, setIsConfigModalOpen } = useAuth();
+  const { user, signOut } = useAuth();
 
   const [nameInput, setNameInput] = useState(state.profile.username);
   const [goalInput, setGoalInput] = useState(state.settings.dailyGoalQuests || 5);
@@ -169,80 +167,45 @@ export const Settings: React.FC = () => {
               <div className="w-4 h-4 rounded-full bg-white shadow-sm" />
             </button>
           </div>
-
-          {/* Display Mode Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-black/20 flex items-center justify-center text-[#DCE8D2]">
-                <Monitor size={16} />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-[#FFF5E8]">Studio Frame Presentation</h4>
-                <p className="text-[10px] text-[#A7B89A]">Show the framed cozy laptop view matching the reference design</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => updateSettings({
-                displayMode: state.settings.displayMode === 'frame' ? 'fullscreen' : 'frame'
-              })}
-              className={`w-12 h-6 rounded-full transition-colors p-1 flex items-center cursor-pointer ${
-                state.settings.displayMode === 'frame' ? 'bg-[#74865B] justify-end' : 'bg-black/40 justify-start'
-              }`}
-            >
-              <div className="w-4 h-4 rounded-full bg-white shadow-sm" />
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Account & Authentication */}
+      {/* Account & Profile Details */}
       <div className="p-5 rounded-3xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm">
         <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
           <div className="flex items-center gap-2">
             <User size={18} className="text-[#F6B8A8]" />
-            <h2 className="text-sm font-extrabold text-[#FFF5E8]">Adventurer Account &amp; Cloud Sync</h2>
+            <h2 className="text-sm font-extrabold text-[#FFF5E8]">Adventurer Account</h2>
           </div>
-          <button
-            onClick={() => setIsConfigModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-bold text-[#DCE8D2] transition-colors cursor-pointer"
-          >
-            <Database size={13} />
-            <span>Firebase Config</span>
-          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="p-3.5 rounded-2xl bg-black/20 border border-white/10">
             <span className="text-[10px] font-bold text-[#A7B89A] uppercase tracking-wider block">
-              Signed-in Adventurer
+              Active Adventurer
             </span>
             <p className="text-sm font-black text-[#FFF5E8] mt-0.5">
               {state.profile.username || 'Adventurer'}
             </p>
             <p className="text-xs text-[#DCE8D2]/80 mt-0.5 font-mono">
-              {user?.email || 'Local Adventurer Session'}
+              {user?.email || 'Guest Adventurer'}
             </p>
           </div>
 
           <div className="p-3.5 rounded-2xl bg-black/20 border border-white/10 flex flex-col justify-between">
             <div>
               <span className="text-[10px] font-bold text-[#A7B89A] uppercase tracking-wider block">
-                Sync Engine Status
+                Account Storage
               </span>
               <div className="flex items-center gap-2 mt-1">
-                <span
-                  className={`w-2.5 h-2.5 rounded-full ${
-                    isLiveFirebase ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                  }`}
-                />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-xs font-black text-[#FFF5E8]">
-                  {isLiveFirebase ? 'Firebase Live Cloud Active' : 'User-Scoped Local & Cloud Sync Ready'}
+                  Cloud Backup Active
                 </span>
               </div>
             </div>
             <p className="text-[11px] text-[#A7B89A] mt-2">
-              All your progress is saved per user and restored every time you sign in!
+              Your quests, habits, and XP progression are tied directly to your account.
             </p>
           </div>
         </div>
@@ -256,7 +219,7 @@ export const Settings: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 hover:bg-red-500/30 text-xs font-bold text-red-200 transition-colors cursor-pointer"
             >
               <LogOut size={14} />
-              Sign Out of Levelora
+              Sign Out
             </button>
           </div>
         )}
