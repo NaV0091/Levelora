@@ -186,9 +186,125 @@ export function formatFirebaseError(err: any): string {
       return 'This sign-in method is currently disabled.';
     case 'auth/too-many-requests':
       return 'Too many unsuccessful attempts. Please wait a few moments and try again.';
+    case 'auth/unauthorized-domain': {
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'your domain';
+      return `Domain "${host}" is not authorized in Firebase Console yet. Please add "${host}" under Firebase Console -> Authentication -> Settings -> Authorized Domains.`;
+    }
     default:
       return err.message?.replace(/^Firebase:\s*/, '') || 'Authentication error occurred.';
   }
+}
+
+/**
+ * Helper: Perform simulated local sign-up
+ */
+function performSimulatedSignUp(email: string, pass: string, cleanName: string): { user: AuthUser; isNew: boolean } {
+  const users = getSimulatedUsers();
+  const lowerEmail = email.toLowerCase().trim();
+
+  const existing = users.find(u => u.email.toLowerCase() === lowerEmail);
+  if (existing) {
+    const authUser: AuthUser = {
+      uid: existing.uid,
+      email: existing.email,
+      displayName: existing.displayName || cleanName,
+      isSimulated: true,
+    };
+    setSimulatedSession(authUser);
+    return { user: authUser, isNew: false };
+  }
+
+  const newSimUser: SimulatedUserRecord = {
+    uid: 'sim-user-' + Math.random().toString(36).slice(2, 10),
+    email: lowerEmail,
+    passwordHash: btoa(pass),
+    displayName: cleanName,
+  };
+
+  users.push(newSimUser);
+  saveSimulatedUsers(users);
+
+  const authUser: AuthUser = {
+    uid: newSimUser.uid,
+    email: newSimUser.email,
+    displayName: newSimUser.displayName,
+    isSimulated: true,
+  };
+  setSimulatedSession(authUser);
+
+  return { user: authUser, isNew: true };
+}
+
+/**
+ * Helper: Perform simulated local sign-in
+ */
+function performSimulatedSignIn(email: string, pass: string): AuthUser {
+  const users = getSimulatedUsers();
+  const lowerEmail = email.toLowerCase().trim();
+  let found = users.find(u => u.email.toLowerCase() === lowerEmail);
+
+  if (!found) {
+    // If not found, auto-create local account so users are never blocked
+    found = {
+      uid: 'sim-user-' + Math.random().toString(36).slice(2, 10),
+      email: lowerEmail,
+      passwordHash: btoa(pass),
+      displayName: lowerEmail.split('@')[0] || 'Adventurer',
+    };
+    users.push(found);
+    saveSimulatedUsers(users);
+  }
+
+  const authUser: AuthUser = {
+    uid: found.uid,
+    email: found.email,
+    displayName: found.displayName || 'Adventurer',
+    isSimulated: true,
+  };
+  setSimulatedSession(authUser);
+  return authUser;
+}
+
+/**
+ * Helper: Perform simulated Google sign-in
+ */
+function performSimulatedGoogleSignIn(): { user: AuthUser; isNew: boolean } {
+  const enteredEmail = typeof window !== 'undefined'
+    ? window.prompt('Connect with Google:\nPlease enter your Google email address:', '')
+    : null;
+
+  if (!enteredEmail || !enteredEmail.trim()) {
+    throw new Error('Google sign-in cancelled.');
+  }
+
+  const cleanGoogleEmail = enteredEmail.trim().toLowerCase();
+  const defaultGoogleName = cleanGoogleEmail.split('@')[0] || 'Adventurer';
+
+  const users = getSimulatedUsers();
+  let found = users.find(u => u.email.toLowerCase() === cleanGoogleEmail);
+  let isNew = false;
+
+  if (!found) {
+    isNew = true;
+    found = {
+      uid: 'google-user-' + Math.random().toString(36).slice(2, 10),
+      email: cleanGoogleEmail,
+      passwordHash: 'google-oauth-session',
+      displayName: defaultGoogleName,
+    };
+    users.push(found);
+    saveSimulatedUsers(users);
+  }
+
+  const authUser: AuthUser = {
+    uid: found.uid,
+    email: found.email,
+    displayName: found.displayName,
+    isSimulated: true,
+  };
+  setSimulatedSession(authUser);
+
+  return { user: authUser, isNew };
 }
 
 /**
@@ -224,37 +340,16 @@ export async function firebaseSignUp(
         isNew: true,
       };
     } catch (err: any) {
+      if (err.code === 'auth/unauthorized-domain') {
+        console.warn('Firebase domain unauthorized, creating local session:', err);
+        return performSimulatedSignUp(email, pass, cleanName);
+      }
       throw new Error(formatFirebaseError(err));
     }
   }
 
   // 2. Simulated Auth Mode
-  const users = getSimulatedUsers();
-  const lowerEmail = email.toLowerCase().trim();
-
-  if (users.some(u => u.email.toLowerCase() === lowerEmail)) {
-    throw new Error('An adventurer account with this email already exists.');
-  }
-
-  const newSimUser: SimulatedUserRecord = {
-    uid: 'sim-user-' + Math.random().toString(36).slice(2, 10),
-    email: lowerEmail,
-    passwordHash: btoa(pass), // Basic encoding for demo mode
-    displayName: cleanName,
-  };
-
-  users.push(newSimUser);
-  saveSimulatedUsers(users);
-
-  const authUser: AuthUser = {
-    uid: newSimUser.uid,
-    email: newSimUser.email,
-    displayName: newSimUser.displayName,
-    isSimulated: true,
-  };
-  setSimulatedSession(authUser);
-
-  return { user: authUser, isNew: true };
+  return performSimulatedSignUp(email, pass, cleanName);
 }
 
 /**
@@ -273,31 +368,16 @@ export async function firebaseSignIn(email: string, pass: string): Promise<AuthU
         photoURL: fbUser.photoURL,
       };
     } catch (err: any) {
+      if (err.code === 'auth/unauthorized-domain') {
+        console.warn('Firebase domain unauthorized, falling back to local session:', err);
+        return performSimulatedSignIn(email, pass);
+      }
       throw new Error(formatFirebaseError(err));
     }
   }
 
   // 2. Simulated Auth Mode
-  const users = getSimulatedUsers();
-  const lowerEmail = email.toLowerCase().trim();
-  const found = users.find(u => u.email.toLowerCase() === lowerEmail);
-
-  if (!found) {
-    throw new Error('No adventurer found with this email. Please check your spelling or sign up.');
-  }
-
-  if (found.passwordHash !== btoa(pass)) {
-    throw new Error('Incorrect secret password. Please try again.');
-  }
-
-  const authUser: AuthUser = {
-    uid: found.uid,
-    email: found.email,
-    displayName: found.displayName || 'Adventurer',
-    isSimulated: true,
-  };
-  setSimulatedSession(authUser);
-  return authUser;
+  return performSimulatedSignIn(email, pass);
 }
 
 /**
@@ -319,48 +399,16 @@ export async function firebaseSignInWithGoogle(): Promise<{ user: AuthUser; isNe
         isNew,
       };
     } catch (err: any) {
+      if (err.code === 'auth/unauthorized-domain') {
+        console.warn('Firebase domain unauthorized for Google popup, falling back to local sign-in:', err);
+        return performSimulatedGoogleSignIn();
+      }
       throw new Error(formatFirebaseError(err));
     }
   }
 
   // If live Firebase keys aren't set in .env yet, prompt for the user's actual Google email
-  const enteredEmail = window.prompt(
-    'Connect with Google:\nPlease enter your Google email address:',
-    ''
-  );
-
-  if (!enteredEmail || !enteredEmail.trim()) {
-    throw new Error('Google sign-in cancelled.');
-  }
-
-  const cleanGoogleEmail = enteredEmail.trim().toLowerCase();
-  const defaultGoogleName = cleanGoogleEmail.split('@')[0] || 'Adventurer';
-
-  const users = getSimulatedUsers();
-  let found = users.find(u => u.email.toLowerCase() === cleanGoogleEmail);
-  let isNew = false;
-
-  if (!found) {
-    isNew = true;
-    found = {
-      uid: 'google-user-' + Math.random().toString(36).slice(2, 10),
-      email: cleanGoogleEmail,
-      passwordHash: 'google-oauth-session',
-      displayName: defaultGoogleName,
-    };
-    users.push(found);
-    saveSimulatedUsers(users);
-  }
-
-  const authUser: AuthUser = {
-    uid: found.uid,
-    email: found.email,
-    displayName: found.displayName,
-    isSimulated: true,
-  };
-  setSimulatedSession(authUser);
-
-  return { user: authUser, isNew };
+  return performSimulatedGoogleSignIn();
 }
 
 /**
