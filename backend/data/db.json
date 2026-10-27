@@ -122,6 +122,16 @@
   ],
   "completionHistory": [
     {
+      "id": "comp-1793085634945",
+      "questId": "quest-1793085634945",
+      "questTitle": "Backend Test Quest",
+      "completedAt": "2026-10-27T07:20:34.945Z",
+      "dateStr": "2026-10-27",
+      "xpAwarded": 25,
+      "associatedAttribute": "discipline",
+      "associatedSkillId": "skill-productivity"
+    },
+    {
       "id": "comp-1793083800145",
       "questId": "quest-1793083800142",
       "questTitle": "Backend Test Quest",
@@ -173,6 +183,14 @@
     }
   ],
   "xpTransactions": [
+    {
+      "id": "tx-1793085634945",
+      "timestamp": "2026-10-27T07:20:34.945Z",
+      "amount": 25,
+      "source": "quest",
+      "description": "Completed quest: Backend Test Quest",
+      "relatedId": "quest-1793085634945"
+    },
     {
       "id": "tx-1793083800145",
       "timestamp": "2026-10-27T06:50:00.145Z",

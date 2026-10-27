@@ -342,28 +342,6 @@ export const AuthModal: React.FC = () => {
               </button>
             )}
 
-            {/* Quick Guest Exploration Option (Sign Up) */}
-            {mode === 'signup' && (
-              <div className="p-3 rounded-2xl bg-gradient-to-r from-white/10 to-white/5 border border-white/15 flex items-center justify-between gap-3 shadow-sm">
-                <div className="text-left">
-                  <p className="text-xs font-black text-[#FFF5E8] flex items-center gap-1.5">
-                    <Compass size={14} className="text-[#F5E6A8]" />
-                    Try without an account
-                  </p>
-                  <p className="text-[10px] text-[#A7B89A] mt-0.5">Explore full RPG quests instantly as guest</p>
-                </div>
-                <button
-                  type="button"
-                  id="signup-guest-quick-btn"
-                  disabled={isSubmitting}
-                  onClick={handleGuestSignIn}
-                  className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#A7B89A] to-[#DCE8D2] hover:brightness-110 active:scale-95 text-xs font-black text-[#29452B] transition-all cursor-pointer whitespace-nowrap shadow-sm disabled:opacity-50"
-                >
-                  Play as Guest &rarr;
-                </button>
-              </div>
-            )}
-
             {/* Divider */}
             <div className="relative py-1 flex items-center justify-center">
               <div className="w-full border-t border-white/10" />
