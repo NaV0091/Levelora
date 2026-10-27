@@ -77,7 +77,22 @@ class DatabaseService {
     }
   }
 
+  public prunePastCompletedQuests(): void {
+    const today = new Date().toISOString().slice(0, 10);
+    const initialLen = this.state.quests.length;
+    this.state.quests = this.state.quests.filter(q => {
+      if (!q.isCompleted) return true;
+      if (!q.completedAt) return false;
+      const compDate = q.completedAt.slice(0, 10);
+      return compDate >= today;
+    });
+    if (this.state.quests.length !== initialLen) {
+      this.saveToFile(this.state);
+    }
+  }
+
   public getState(): LeveloraState {
+    this.prunePastCompletedQuests();
     return this.state;
   }
 
@@ -89,6 +104,7 @@ class DatabaseService {
 
   // Quests CRUD
   public getQuests(): Quest[] {
+    this.prunePastCompletedQuests();
     return this.state.quests;
   }
 

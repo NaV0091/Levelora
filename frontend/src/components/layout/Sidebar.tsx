@@ -9,9 +9,12 @@ import {
   BarChart3, 
   Trophy, 
   Settings, 
-  Plus
+  Plus,
+  Download,
+  X
 } from 'lucide-react';
 import { useLevelora } from '../../context/LeveloraContext';
+import { usePwaInstall } from '../../hooks/usePwaInstall';
 import { PandaMascot } from '../common/PandaMascot';
 
 interface SidebarProps {
@@ -22,6 +25,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, onCloseMobile }) => {
   const { state, setIsAddQuestOpen } = useLevelora();
+  const { triggerDirectInstall } = usePwaInstall();
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
@@ -41,28 +45,53 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, setCurrentTab, onC
   };
 
   return (
-    <aside className="w-64 flex flex-col justify-between h-full p-6 text-[#FFF5E8] select-none">
+    <aside className="w-64 flex flex-col justify-between h-full p-5 sm:p-6 text-[#FFF5E8] select-none">
       {/* Top Profile / Greeting Section */}
       <div>
-        <div className="mb-6">
-          <p className="text-sm font-medium text-[#DCE8D2]/90">Hello,</p>
-          <h2 className="text-2xl font-black tracking-tight text-[#FFF5E8]">
-            {state.profile.username || 'Adventurer'}
-          </h2>
-          <div className="mt-1 flex items-center gap-1.5 text-xs text-[#A7B89A]">
-            <span className="w-2 h-2 rounded-full bg-[#A7B89A] animate-pulse" />
-            <span className="font-semibold">{state.profile.title}</span>
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <p className="text-sm font-medium text-[#DCE8D2]/90">Hello,</p>
+            <h2 className="text-2xl font-black tracking-tight text-[#FFF5E8]">
+              {state.profile.username || 'Adventurer'}
+            </h2>
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-[#A7B89A]">
+              <span className="w-2 h-2 rounded-full bg-[#A7B89A] animate-pulse" />
+              <span className="font-semibold">{state.profile.title}</span>
+            </div>
           </div>
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[#DCE8D2] hover:text-white transition-all cursor-pointer"
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
-        {/* Action Button: Pastel Peach pill matching reference image */}
-        <div className="mb-6">
+        {/* Action Buttons: Add quest & Install app */}
+        <div className="mb-5 space-y-2">
           <button
-            onClick={() => setIsAddQuestOpen(true)}
+            onClick={() => {
+              setIsAddQuestOpen(true);
+              if (onCloseMobile) onCloseMobile();
+            }}
             className="w-full py-2.5 px-4 rounded-full bg-[#F6B8A8] hover:bg-[#F3A6B7] active:scale-95 text-[#29452B] font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Plus size={16} strokeWidth={2.5} />
             Add new quest
+          </button>
+
+          <button
+            onClick={async () => {
+              await triggerDirectInstall();
+              if (onCloseMobile) onCloseMobile();
+            }}
+            className="w-full py-2 px-3 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-[#FFF5E8] border border-white/15 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Download size={13} className="text-[#F6B8A8]" />
+            <span>Install LEVELORA App</span>
           </button>
         </div>
 

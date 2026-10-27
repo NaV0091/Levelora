@@ -7,7 +7,8 @@ import {
   ArrowRight, 
   AlertCircle, 
   Eye, 
-  EyeOff
+  EyeOff,
+  Compass
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PandaMascot } from '../common/PandaMascot';
@@ -19,6 +20,7 @@ export const AuthModal: React.FC = () => {
     signIn, 
     signUp, 
     signInWithGoogle, 
+    signInAsGuest,
     needsNamePrompt,
     setNeedsNamePrompt,
     updateAdventurerName
@@ -164,6 +166,21 @@ export const AuthModal: React.FC = () => {
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Google sign-in error.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGuestSignIn = async () => {
+    setErrorMessage(null);
+    setIsSubmitting(true);
+    try {
+      const res = await signInAsGuest();
+      if (!res.success) {
+        setErrorMessage(res.error || 'Failed to continue as guest.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Guest sign-in error.');
     } finally {
       setIsSubmitting(false);
     }
@@ -325,6 +342,28 @@ export const AuthModal: React.FC = () => {
               </button>
             )}
 
+            {/* Quick Guest Exploration Option (Sign Up) */}
+            {mode === 'signup' && (
+              <div className="p-3 rounded-2xl bg-gradient-to-r from-white/10 to-white/5 border border-white/15 flex items-center justify-between gap-3 shadow-sm">
+                <div className="text-left">
+                  <p className="text-xs font-black text-[#FFF5E8] flex items-center gap-1.5">
+                    <Compass size={14} className="text-[#F5E6A8]" />
+                    Try without an account
+                  </p>
+                  <p className="text-[10px] text-[#A7B89A] mt-0.5">Explore full RPG quests instantly as guest</p>
+                </div>
+                <button
+                  type="button"
+                  id="signup-guest-quick-btn"
+                  disabled={isSubmitting}
+                  onClick={handleGuestSignIn}
+                  className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#A7B89A] to-[#DCE8D2] hover:brightness-110 active:scale-95 text-xs font-black text-[#29452B] transition-all cursor-pointer whitespace-nowrap shadow-sm disabled:opacity-50"
+                >
+                  Play as Guest &rarr;
+                </button>
+              </div>
+            )}
+
             {/* Divider */}
             <div className="relative py-1 flex items-center justify-center">
               <div className="w-full border-t border-white/10" />
@@ -359,6 +398,19 @@ export const AuthModal: React.FC = () => {
                 />
               </svg>
               <span>Continue with Google</span>
+            </button>
+
+            {/* Continue as Guest Button */}
+            <button
+              type="button"
+              id="continue-as-guest-btn"
+              disabled={isSubmitting}
+              onClick={handleGuestSignIn}
+              className="w-full py-2.5 rounded-full bg-white/10 hover:bg-white/15 active:scale-95 border border-[#A7B89A]/50 hover:border-[#F5E6A8] text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 group"
+            >
+              <Compass size={15} className="text-[#F5E6A8] group-hover:rotate-45 transition-transform" />
+              <span>Continue as Guest</span>
+              <span className="text-[10px] text-[#A7B89A] font-semibold hidden sm:inline">• Instant Play</span>
             </button>
           </div>
         </form>

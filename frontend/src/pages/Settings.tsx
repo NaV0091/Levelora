@@ -14,11 +14,13 @@ import {
 } from 'lucide-react';
 import { useLevelora } from '../context/LeveloraContext';
 import { useAuth } from '../context/AuthContext';
+import { usePwaInstall } from '../hooks/usePwaInstall';
 import { StorageService } from '../services/storage';
 
 export const Settings: React.FC = () => {
   const { state, updateProfile, updateSettings, resetAllProgress } = useLevelora();
   const { user, signOut } = useAuth();
+  const { triggerDirectInstall } = usePwaInstall();
 
   const [nameInput, setNameInput] = useState(state.profile.username);
   const [goalInput, setGoalInput] = useState(state.settings.dailyGoalQuests || 5);
@@ -263,6 +265,53 @@ export const Settings: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* App Installation & Shortcuts Card */}
+      <div className="p-5 rounded-3xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm">
+        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-white/10">
+          <Download size={18} className="text-[#F6B8A8]" />
+          <h2 className="text-sm font-extrabold text-[#FFF5E8]">App Installation &amp; Device Setup</h2>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+          <div>
+            <h4 className="text-xs font-bold text-[#FFF5E8]">Install LEVELORA RPG</h4>
+            <p className="text-[11px] text-[#A7B89A] mt-0.5">
+              Launch directly from your desktop or phone home screen with 1-click.
+            </p>
+          </div>
+
+          <button
+            id="settings-install-app-btn"
+            onClick={triggerDirectInstall}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#F6B8A8] to-[#F3A6B7] hover:brightness-105 active:scale-95 text-[#29452B] font-extrabold text-xs shadow-md transition-all cursor-pointer whitespace-nowrap"
+          >
+            <Download size={15} strokeWidth={2.5} />
+            <span>Install / Create Shortcut</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Guest Account Info if applicable */}
+      {user?.isGuest && (
+        <div className="p-5 rounded-3xl bg-gradient-to-r from-[#A7B89A]/20 via-[#DCE8D2]/15 to-[#F5E6A8]/20 backdrop-blur-md border border-[#F5E6A8]/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="inline-block px-2 py-0.5 rounded-full bg-[#F5E6A8] text-[#29452B] text-[10px] font-black uppercase mb-1">
+              Guest Mode Active
+            </span>
+            <h3 className="text-sm font-extrabold text-[#FFF5E8]">Want to sync across multiple devices?</h3>
+            <p className="text-xs text-[#DCE8D2] mt-0.5">
+              Create an account or sign in with Google to enable automatic cloud backup.
+            </p>
+          </div>
+          <button
+            onClick={() => signOut()}
+            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#F6B8A8] to-[#F3A6B7] text-[#29452B] font-extrabold text-xs shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap shrink-0"
+          >
+            Create Permanent Account
+          </button>
+        </div>
+      )}
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (

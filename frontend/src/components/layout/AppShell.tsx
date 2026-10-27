@@ -16,7 +16,6 @@ import { HabitModal } from '../habits/HabitModal';
 import { LevelUpModal } from '../common/LevelUpModal';
 import { AchievementModal } from '../common/AchievementModal';
 import { ToastContainer } from '../common/ToastContainer';
-import { PandaMascot } from '../common/PandaMascot';
 import { AuthModal } from '../auth/AuthModal';
 
 export const AppShell: React.FC = () => {
@@ -49,23 +48,9 @@ export const AppShell: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-gradient-to-br from-[#F6B8A8] via-[#F3A6B7] to-[#F5E6A8] p-2 sm:p-4 lg:p-6 flex flex-col items-center justify-center overflow-x-hidden selection:bg-[#F3A6B7]/40 selection:text-[#29452B]">
-      
-      {/* Floating Outer Ambient Mascot & Speech Bubble */}
-      <div className="hidden xl:flex fixed bottom-6 left-6 z-30 items-end gap-3 pointer-events-auto">
-        <div className="p-3.5 rounded-3xl bg-[#FFF5E8]/95 backdrop-blur-md border border-[#F3A6B7]/60 shadow-xl max-w-xs text-xs text-[#29452B] leading-relaxed">
-          <p className="font-semibold italic">
-            &ldquo;Every tiny step counts — today&apos;s habit is tomorrow&apos;s victory.&rdquo;
-          </p>
-          <span className="text-[10px] text-[#74865B] font-bold block mt-1 text-right">— Nooby</span>
-        </div>
-        <div className="shrink-0 -mb-2">
-          <PandaMascot pose="bamboo" size={88} animated />
-        </div>
-      </div>
-
-      {/* Main App Container */}
-      <div className="w-full max-w-7xl min-h-[92vh] flex flex-col rounded-3xl border border-white/20 bg-gradient-to-b from-[#253d26] via-[#2c472e] to-[#344f36] shadow-2xl overflow-hidden my-auto">
+    <div className="relative min-h-screen w-full bg-[#1e3421] flex flex-col overflow-x-hidden selection:bg-[#A7B89A]/40 selection:text-[#FFF5E8]">
+      {/* Main App Container - Fits 100% to screen */}
+      <div className="w-full min-h-screen flex flex-col bg-gradient-to-b from-[#253d26] via-[#2c472e] to-[#344f36] shadow-none">
         
         {/* Top Header */}
         <Header 
@@ -73,7 +58,7 @@ export const AppShell: React.FC = () => {
         />
 
         {/* Body Layout: Sidebar + Main Content */}
-        <div className="flex flex-1 overflow-hidden min-h-[calc(92vh-75px)]">
+        <div className="flex flex-1 overflow-hidden min-h-[calc(100vh-65px)]">
           
           {/* Desktop Sidebar */}
           <div className="hidden lg:block border-r border-white/10 shrink-0 overflow-y-auto">
@@ -84,10 +69,10 @@ export const AppShell: React.FC = () => {
           {mobileMenuOpen && (
             <div className="lg:hidden fixed inset-0 z-50 flex">
               <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fadeIn"
                 onClick={() => setMobileMenuOpen(false)}
               />
-              <div className="relative w-72 bg-[#253d26] h-full shadow-2xl border-r border-white/20 z-10 overflow-y-auto">
+              <div className="relative w-72 max-w-[85vw] bg-[#253d26] h-full shadow-2xl border-r border-white/20 z-10 overflow-y-auto">
                 <Sidebar
                   currentTab={currentTab}
                   setCurrentTab={setCurrentTab}
@@ -97,8 +82,8 @@ export const AppShell: React.FC = () => {
             </div>
           )}
 
-          {/* Main Content Area */}
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 scroll-smooth">
+          {/* Main Content Area: Responsive padding with safe bottom space on mobile for BottomNav */}
+          <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 pb-28 lg:pb-8 scroll-smooth">
             {renderActivePage()}
           </main>
         </div>

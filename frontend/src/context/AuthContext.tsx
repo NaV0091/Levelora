@@ -4,6 +4,7 @@ import {
   firebaseSignUp,
   firebaseSignIn,
   firebaseSignInWithGoogle,
+  firebaseSignInAsGuest,
   firebaseSignOut,
   firebaseUpdateDisplayName,
   subscribeToAuth,
@@ -18,6 +19,7 @@ interface AuthContextType {
   signIn: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   signUp: (email: string, pass: string, adventurerName?: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInAsGuest: () => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   updateAdventurerName: (newName: string) => Promise<void>;
   needsNamePrompt: boolean;
@@ -94,6 +96,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const signInAsGuest = useCallback(async () => {
+    try {
+      setLoading(true);
+      const guestUser = await firebaseSignInAsGuest();
+      setUser(guestUser);
+      setIsLiveFirebase(isLiveFirebaseActive());
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to continue as guest.' };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       setLoading(true);
@@ -119,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signIn,
         signUp,
         signInWithGoogle,
+        signInAsGuest,
         signOut,
         updateAdventurerName,
         needsNamePrompt,

@@ -200,7 +200,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
                           setEditingQuest(quest);
                           setIsAddQuestOpen(true);
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-black/20 hover:bg-white/20 text-[#DCE8D2] hover:text-white transition-all cursor-pointer"
+                        className="opacity-80 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 rounded-lg bg-black/20 hover:bg-white/20 text-[#DCE8D2] hover:text-white transition-all cursor-pointer"
                         title="Edit Quest"
                       >
                         <Edit2 size={12} />
@@ -210,7 +210,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
                         onClick={() => {
                           deleteQuest(quest.id);
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-black/20 hover:bg-red-500/30 text-red-300 hover:text-red-100 transition-all cursor-pointer"
+                        className="opacity-80 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 rounded-lg bg-black/20 hover:bg-red-500/30 text-red-300 hover:text-red-100 transition-all cursor-pointer"
                         title="Delete Quest"
                       >
                         <Trash2 size={12} />
@@ -219,7 +219,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
                       {isDone && (
                         <button
                           onClick={() => reverseQuestCompletion(quest.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-black/20 hover:bg-black/40 text-[#DCE8D2] transition-all cursor-pointer"
+                          className="opacity-80 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 rounded-lg bg-black/20 hover:bg-black/40 text-[#DCE8D2] transition-all cursor-pointer"
                           title="Undo / Reverse completion"
                         >
                           <RotateCcw size={12} />
@@ -329,7 +329,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateTab }) => {
                               onClick={() => {
                                 deleteHabit(habit.id);
                               }}
-                              className="opacity-0 group-hover:opacity-100 p-0.5 text-red-300 hover:text-red-100 transition-opacity shrink-0 cursor-pointer"
+                              className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 p-0.5 text-red-300 hover:text-red-100 transition-opacity shrink-0 cursor-pointer"
                               title="Delete habit"
                             >
                               <Trash2 size={12} />

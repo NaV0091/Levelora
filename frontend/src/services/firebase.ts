@@ -8,6 +8,7 @@ import {
   updateProfile as fbUpdateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  signInAnonymously,
   type Auth,
   type User,
 } from 'firebase/auth';
@@ -27,6 +28,7 @@ export interface AuthUser {
   displayName: string | null;
   photoURL?: string | null;
   isSimulated?: boolean;
+  isGuest?: boolean;
 }
 
 let app: FirebaseApp | null = null;
@@ -36,6 +38,7 @@ let googleProvider: GoogleAuthProvider | null = null;
 
 const SIMULATED_USERS_KEY = 'levelora_simulated_users_db';
 const SIMULATED_SESSION_KEY = 'levelora_simulated_current_session';
+const GUEST_SESSION_KEY = 'levelora_guest_session_active';
 
 // Initialize Firebase if valid credentials exist
 export function initFirebase(): boolean {
@@ -90,8 +93,23 @@ function saveSimulatedUsers(users: SimulatedUserRecord[]): void {
 function getSimulatedSession(): AuthUser | null {
   if (typeof window === 'undefined') return null;
   try {
+    // 1. If currently in an active browser tab session as guest, maintain it across refreshes
+    const sessionGuest = sessionStorage.getItem(GUEST_SESSION_KEY);
+    if (sessionGuest) {
+      return JSON.parse(sessionGuest);
+    }
+
+    // 2. Persistent authenticated real account (email/password or Google)
     const raw = localStorage.getItem(SIMULATED_SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AuthUser;
+    // Guest sessions shouldn't auto-restore across new browser launches,
+    // so the app asks whether to continue as guest or log in!
+    if (parsed.isGuest) {
+      localStorage.removeItem(SIMULATED_SESSION_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -100,9 +118,16 @@ function getSimulatedSession(): AuthUser | null {
 function setSimulatedSession(user: AuthUser | null): void {
   if (typeof window === 'undefined') return;
   if (user) {
-    localStorage.setItem(SIMULATED_SESSION_KEY, JSON.stringify(user));
+    if (user.isGuest) {
+      sessionStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(user));
+      localStorage.removeItem(SIMULATED_SESSION_KEY);
+    } else {
+      localStorage.setItem(SIMULATED_SESSION_KEY, JSON.stringify(user));
+      sessionStorage.removeItem(GUEST_SESSION_KEY);
+    }
   } else {
     localStorage.removeItem(SIMULATED_SESSION_KEY);
+    sessionStorage.removeItem(GUEST_SESSION_KEY);
   }
 }
 
@@ -412,11 +437,57 @@ export async function firebaseSignInWithGoogle(): Promise<{ user: AuthUser; isNe
 }
 
 /**
+ * Sign in as Guest (Live Firebase Anonymous Auth or Simulated Guest Session)
+ */
+export async function firebaseSignInAsGuest(): Promise<AuthUser> {
+  const guestName = 'Guest Adventurer';
+
+  // 1. Try Live Firebase
+  if (initFirebase() && auth) {
+    try {
+      const credential = await signInAnonymously(auth);
+      const fbUser = credential.user;
+      try {
+        await fbUpdateProfile(fbUser, { displayName: guestName });
+      } catch (e) {
+        console.warn('Failed to set displayName on anonymous user:', e);
+      }
+      const guestUser: AuthUser = {
+        uid: fbUser.uid,
+        email: null,
+        displayName: guestName,
+        photoURL: null,
+        isGuest: true,
+      };
+      setSimulatedSession(guestUser);
+      return guestUser;
+    } catch (err: any) {
+      console.warn('Live Firebase anonymous sign-in failed or disabled, falling back to local guest session:', err);
+    }
+  }
+
+  // 2. Simulated Local Guest
+  const guestUser: AuthUser = {
+    uid: 'guest-' + Math.random().toString(36).slice(2, 10),
+    email: null,
+    displayName: guestName,
+    isGuest: true,
+    isSimulated: true,
+  };
+  setSimulatedSession(guestUser);
+  return guestUser;
+}
+
+/**
  * Sign Out
  */
 export async function firebaseSignOut(): Promise<void> {
   if (initFirebase() && auth) {
-    await fbSignOut(auth);
+    try {
+      await fbSignOut(auth);
+    } catch (e) {
+      console.warn('Firebase signout error:', e);
+    }
   }
   setSimulatedSession(null);
 }
@@ -457,11 +528,13 @@ export function subscribeToAuth(callback: (user: AuthUser | null) => void): () =
         callback({
           uid: fbUser.uid,
           email: fbUser.email,
-          displayName: fbUser.displayName || 'Adventurer',
+          displayName: fbUser.displayName || (fbUser.isAnonymous ? 'Guest Adventurer' : 'Adventurer'),
           photoURL: fbUser.photoURL,
+          isGuest: fbUser.isAnonymous,
         });
       } else {
-        callback(null);
+        const sim = getSimulatedSession();
+        callback(sim);
       }
     });
   }

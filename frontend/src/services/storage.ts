@@ -1,5 +1,6 @@
 import type { LeveloraState } from '../types';
 import { getInitialSeedData } from './seedData';
+import { prunePastCompletedQuests } from '../utils/dates';
 
 const DEFAULT_STORAGE_KEY = 'levelora_app_state_v3';
 
@@ -47,6 +48,13 @@ export class StorageService {
         const initial = getInitialSeedData(fallbackName, userId);
         StorageService.saveUserState(userId, initial);
         return initial;
+      }
+
+      // Automatically prune quests completed on previous days
+      const prunedQuests = prunePastCompletedQuests(parsed.quests);
+      if (prunedQuests.length !== parsed.quests.length) {
+        parsed.quests = prunedQuests;
+        StorageService.saveUserState(userId, parsed);
       }
 
       return parsed;

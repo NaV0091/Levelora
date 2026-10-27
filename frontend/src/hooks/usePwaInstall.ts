@@ -74,17 +74,7 @@ export function usePwaInstall() {
   }, []);
 
   const triggerDirectInstall = useCallback(async (): Promise<DirectInstallResult> => {
-    // 1. If already installed
-    if (
-      isInstalled ||
-      (typeof window !== 'undefined' &&
-        (window.matchMedia('(display-mode: standalone)').matches ||
-          (window.navigator as any).standalone === true))
-    ) {
-      return 'already-installed';
-    }
-
-    // 2. Direct browser native install prompt (creates native shortcut / app)
+    // 1. If direct browser native install prompt is available, trigger it
     if (deferredPromptRef.current) {
       try {
         const promptEvent = deferredPromptRef.current;
@@ -102,10 +92,10 @@ export function usePwaInstall() {
       }
     }
 
-    // 3. Direct 1-click Desktop shortcut file creation with NO tips
+    // 2. Direct 1-click Desktop shortcut file creation for Windows/macOS/desktop
     createDesktopShortcutFile();
     return 'shortcut-created';
-  }, [isInstalled]);
+  }, []);
 
   return {
     isInstallable,

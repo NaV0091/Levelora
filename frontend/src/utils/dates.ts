@@ -169,3 +169,31 @@ export function calculateStreaks(activeDates: string[] | Set<string>, referenceD
     longestStreak
   };
 }
+
+/**
+ * Checks whether a completed quest was completed on a previous day (before today).
+ * Quests completed today remain visible for the rest of today, but auto-delete next day.
+ */
+export function isQuestCompletedOnPastDay(
+  quest: { isCompleted: boolean; completedAt?: string },
+  todayStr: string = getLocalDateString()
+): boolean {
+  if (!quest.isCompleted) return false;
+  if (!quest.completedAt) return true; // Legacy completed quest without timestamp - treat as past
+  try {
+    const compDateStr = getLocalDateString(new Date(quest.completedAt));
+    return compDateStr < todayStr;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Prunes quests that were completed on previous days so they delete themselves the next day.
+ */
+export function prunePastCompletedQuests<T extends { isCompleted: boolean; completedAt?: string }>(
+  quests: T[],
+  todayStr: string = getLocalDateString()
+): T[] {
+  return quests.filter(q => !isQuestCompletedOnPastDay(q, todayStr));
+}

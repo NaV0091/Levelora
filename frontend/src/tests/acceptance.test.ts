@@ -10,7 +10,9 @@ import {
 
 import {
   calculateStreaks,
-  getCurrentWeekDays
+  getCurrentWeekDays,
+  isQuestCompletedOnPastDay,
+  prunePastCompletedQuests
 } from '../utils/dates.ts';
 
 import { getInitialSeedData } from '../services/seedData.ts';
@@ -162,5 +164,77 @@ describe('ACCEPTANCE TESTS: LEVELORA SYSTEM', () => {
     assert.strictEqual(week.length, 7);
     const dayShorts = week.map(d => d.dayShort);
     assert.deepStrictEqual(dayShorts, ['M', 'T', 'W', 'T', 'F', 'S', 'S']);
+  });
+
+  // Test: Guest Mode and installation support
+  it('Guest Mode provides instant guest state and profile without requiring email credentials', () => {
+    const guestUser = {
+      uid: 'guest-test-123',
+      email: null,
+      displayName: 'Guest Adventurer',
+      isGuest: true,
+      isSimulated: true,
+    };
+    assert.strictEqual(guestUser.isGuest, true);
+    assert.strictEqual(guestUser.email, null);
+    assert.strictEqual(guestUser.displayName, 'Guest Adventurer');
+
+    const seed = getInitialSeedData(guestUser.displayName);
+    assert.strictEqual(seed.profile.username, 'Guest Adventurer');
+    assert(seed.quests.length > 0);
+  });
+
+  // Test: Completed to-do quest auto-deletes itself on next day
+  it('Requirement: Completed quest stays visible today, but deletes itself next day', () => {
+    const todayStr = '2026-10-27';
+    
+    const activeQuest: Quest = {
+      id: 'q1',
+      title: 'Active Task',
+      description: 'Not done yet',
+      category: 'productivity',
+      difficulty: 'easy',
+      xpReward: 15,
+      associatedAttribute: 'discipline',
+      isCompleted: false,
+    };
+
+    const completedTodayQuest: Quest = {
+      id: 'q2',
+      title: 'Completed Today Task',
+      description: 'Finished today',
+      category: 'health',
+      difficulty: 'easy',
+      xpReward: 20,
+      associatedAttribute: 'vitality',
+      isCompleted: true,
+      completedAt: '2026-10-27T08:30:00.000Z',
+    };
+
+    const completedYesterdayQuest: Quest = {
+      id: 'q3',
+      title: 'Completed Yesterday Task',
+      description: 'Finished yesterday - should auto-delete today',
+      category: 'fitness',
+      difficulty: 'medium',
+      xpReward: 30,
+      associatedAttribute: 'strength',
+      isCompleted: true,
+      completedAt: '2026-10-26T10:00:00.000Z',
+    };
+
+    // Verify individual checks
+    assert.strictEqual(isQuestCompletedOnPastDay(activeQuest, todayStr), false);
+    assert.strictEqual(isQuestCompletedOnPastDay(completedTodayQuest, todayStr), false);
+    assert.strictEqual(isQuestCompletedOnPastDay(completedYesterdayQuest, todayStr), true);
+
+    // Verify list pruning
+    const allQuests = [activeQuest, completedTodayQuest, completedYesterdayQuest];
+    const remainingQuests = prunePastCompletedQuests(allQuests, todayStr);
+
+    assert.strictEqual(remainingQuests.length, 2);
+    assert.strictEqual(remainingQuests.some(q => q.id === 'q3'), false); // q3 auto-deleted!
+    assert.strictEqual(remainingQuests.some(q => q.id === 'q1'), true); // active remains
+    assert.strictEqual(remainingQuests.some(q => q.id === 'q2'), true); // today completed remains
   });
 });

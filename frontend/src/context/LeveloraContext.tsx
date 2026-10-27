@@ -13,7 +13,7 @@ import { useAuth } from './AuthContext';
 import { cloudSaveUserData, cloudLoadUserData } from '../services/firebase';
 import { getLevelProgress, getSkillLevelAndStage } from '../utils/progression';
 import type { LevelInfo } from '../utils/progression';
-import { getLocalDateString, calculateStreaks } from '../utils/dates';
+import { getLocalDateString, calculateStreaks, isQuestCompletedOnPastDay, prunePastCompletedQuests } from '../utils/dates';
 import { sounds } from '../utils/sound';
 import { fireCozyConfetti } from '../utils/confetti';
 
@@ -90,8 +90,8 @@ export const LeveloraProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let isCancelled = false;
 
     if (!user) {
-      const guestSeed = StorageService.resetUserState('guest', 'Adventurer');
-      setState(guestSeed);
+      const guestLocal = StorageService.loadUserState('guest', 'Adventurer');
+      setState(guestLocal);
       return;
     }
 
@@ -104,8 +104,10 @@ export const LeveloraProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // 2. Fetch latest cloud state from Firestore
     cloudLoadUserData(user.uid).then(cloudState => {
       if (!isCancelled && cloudState) {
+        const prunedQuests = prunePastCompletedQuests(cloudState.quests);
         const mergedState: LeveloraState = {
           ...cloudState,
+          quests: prunedQuests,
           profile: {
             ...cloudState.profile,
             username: user.displayName || cloudState.profile.username || 'Adventurer',
@@ -123,7 +125,39 @@ export const LeveloraProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => {
       isCancelled = true;
     };
-  }, [user?.uid, user?.displayName]);
+  }, [user]);
+
+  // Automatically prune completed quests from previous days (midnight rollover or next day open)
+  useEffect(() => {
+    const pruneExpiredQuests = () => {
+      const today = getLocalDateString();
+      setState(prev => {
+        const hasPastCompleted = prev.quests.some(q => isQuestCompletedOnPastDay(q, today));
+        if (!hasPastCompleted) return prev;
+        const cleaned = prunePastCompletedQuests(prev.quests, today);
+        return {
+          ...prev,
+          quests: cleaned,
+        };
+      });
+    };
+
+    pruneExpiredQuests();
+    const interval = setInterval(pruneExpiredQuests, 30000); // Check every 30s
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        pruneExpiredQuests();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+  }, []);
 
   // Persist state updates to user-scoped storage & Firestore
   useEffect(() => {
@@ -136,7 +170,7 @@ export const LeveloraProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [state, user?.uid]);
+  }, [state, user]);
 
   // Current Level & Progress Info calculated strictly from lifetime XP
   const levelInfo = useMemo(() => {
